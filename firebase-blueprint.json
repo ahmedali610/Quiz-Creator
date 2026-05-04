@@ -1,0 +1,134 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "username": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "player"] },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["email", "role", "createdAt"]
+    },
+    "Team": {
+      "title": "Team",
+      "description": "A playing team",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "coverUrl": { "type": "string" },
+        "themeColor": { "type": "string" },
+        "inviteToken": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["name", "inviteToken", "createdBy", "createdAt"]
+    },
+    "TeamMember": {
+      "title": "TeamMember",
+      "description": "A user in a team",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "teamId": { "type": "string" },
+        "totalScore": { "type": "number" },
+        "quizzesCompleted": { "type": "number" },
+        "joinedAt": { "type": "number" }
+      },
+      "required": ["userId", "teamId", "totalScore", "quizzesCompleted", "joinedAt"]
+    },
+    "Quiz": {
+      "title": "Quiz",
+      "description": "A quiz template that can be assigned to teams",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "timeLimitSeconds": { "type": "number" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["title", "status", "createdAt"]
+    },
+    "AssignedQuiz": {
+      "title": "AssignedQuiz",
+      "description": "A quiz assigned to a specific team with an expiration",
+      "type": "object",
+      "properties": {
+        "quizId": { "type": "string" },
+        "quizTitle": { "type": "string" },
+        "assignedAt": { "type": "number" },
+        "expiresAt": { "type": "number" },
+        "durationMinutes": { "type": "number" }
+      },
+      "required": ["quizId", "quizTitle", "assignedAt", "expiresAt"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "A question inside a quiz",
+      "type": "object",
+      "properties": {
+        "quizId": { "type": "string" },
+        "type": { "type": "string", "enum": ["mcq", "tf", "short"] },
+        "text": { "type": "string" },
+        "options": { "type": "array" },
+        "correctAnswer": { "type": "string" },
+        "points": { "type": "number" },
+        "explanation": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "order": { "type": "number" }
+      },
+      "required": ["quizId", "type", "text", "points", "order"]
+    },
+    "QuizAttempt": {
+      "title": "QuizAttempt",
+      "description": "A player's attempt at a quiz",
+      "type": "object",
+      "properties": {
+        "quizId": { "type": "string" },
+        "teamId": { "type": "string" },
+        "userId": { "type": "string" },
+        "score": { "type": "number" },
+        "maxScore": { "type": "number" },
+        "answers": { "type": "object" },
+        "completedAt": { "type": "number" }
+      },
+      "required": ["quizId", "teamId", "userId", "score", "maxScore", "completedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Global user profiles"
+    },
+    "/teams/{teamId}": {
+      "schema": { "$ref": "#/entities/Team" },
+      "description": "Teams"
+    },
+    "/teams/{teamId}/members/{userId}": {
+      "schema": { "$ref": "#/entities/TeamMember" },
+      "description": "Members of a team, aggregated stats for leaderboard"
+    },
+    "/teams/{teamId}/assigned_quizzes/{quizId}": {
+      "schema": { "$ref": "#/entities/AssignedQuiz" },
+      "description": "Quizzes currently assigned to a team"
+    },
+    "/quizzes/{quizId}": {
+      "schema": { "$ref": "#/entities/Quiz" },
+      "description": "Quizzes"
+    },
+    "/quizzes/{quizId}/questions/{questionId}": {
+      "schema": { "$ref": "#/entities/Question" },
+      "description": "Questions inside a quiz"
+    },
+    "/quiz_attempts/{attemptId}": {
+      "schema": { "$ref": "#/entities/QuizAttempt" },
+      "description": "Player quiz attempts"
+    }
+  }
+}

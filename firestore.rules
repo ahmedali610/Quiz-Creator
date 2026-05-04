@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { 
+      return isSignedIn() && 
+      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'; 
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /teams/{teamId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+      
+      match /members/{userId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && request.auth.uid == userId;
+        allow update, delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      }
+
+      match /assigned_quizzes/{quizId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+    }
+
+    match /quizzes/{quizId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+      
+      match /questions/{questionId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+    }
+
+    match /quiz_attempts/{attemptId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && 
+                    incoming().userId == request.auth.uid &&
+                    exists(/databases/$(database)/documents/teams/$(incoming().teamId)/assigned_quizzes/$(incoming().quizId)) &&
+                    get(/databases/$(database)/documents/teams/$(incoming().teamId)/assigned_quizzes/$(incoming().quizId)).data.expiresAt > request.time.toMillis();
+      allow update: if isAdmin();
+    }
+  }
+}
